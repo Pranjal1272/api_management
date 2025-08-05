@@ -7,7 +7,8 @@ import {
   FileText, 
   Home, 
   Users,
-  Activity
+  Activity,
+  Settings
 } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
@@ -19,6 +20,7 @@ const Sidebar = () => {
     { to: '/api-keys', icon: Key, label: 'API Keys' },
     { to: '/analytics', icon: BarChart3, label: 'Analytics' },
     { to: '/testing', icon: TestTube, label: 'API Testing' },
+    { to: '/configs', icon: Settings, label: 'API Configs' },
     { to: '/logs', icon: FileText, label: 'API Logs' },
     { to: '/activity', icon: Activity, label: 'Activity' }
   ];

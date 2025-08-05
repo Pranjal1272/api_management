@@ -221,6 +221,33 @@ export const activityAPI = {
   },
 };
 
+// API Configurations API
+export const apiConfigsAPI = {
+  getAll: async () => {
+    return apiRequest('/configs');
+  },
+
+  create: async (configData) => {
+    return apiRequest('/configs', {
+      method: 'POST',
+      body: configData,
+    });
+  },
+
+  update: async (id, configData) => {
+    return apiRequest(`/configs/${id}`, {
+      method: 'PUT',
+      body: configData,
+    });
+  },
+
+  delete: async (id) => {
+    return apiRequest(`/configs/${id}`, {
+      method: 'DELETE',
+    });
+  },
+};
+
 // Testing API
 export const testingAPI = {
   request: async (requestData) => {
@@ -302,6 +329,7 @@ export default {
   analyticsAPI,
   logsAPI,
   activityAPI,
+  apiConfigsAPI,
   testingAPI,
   adminAPI,
 };

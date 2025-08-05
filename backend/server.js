@@ -15,6 +15,7 @@ import logsRoutes from './routes/logs.js';
 import activityRoutes from './routes/activity.js';
 import adminRoutes from './routes/admin.js';
 import testingRoutes from './routes/testing.js';
+import apiConfigRoutes from './routes/apiConfigs.js';
 
 // Import middleware
 import { authenticateToken } from './middleware/auth.js';
@@ -78,6 +79,7 @@ app.use('/api/logs', authenticateToken, logsRoutes);
 app.use('/api/activity', authenticateToken, activityRoutes);
 app.use('/api/admin', authenticateToken, adminRoutes);
 app.use('/api/testing', authenticateToken, testingRoutes);
+app.use('/api/configs', authenticateToken, apiConfigRoutes);
 
 // 404 handler
 app.use('*', (req, res) => {

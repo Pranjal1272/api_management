@@ -1,9 +1,9 @@
 import React, { useState, useEffect } from 'react';
-import { testingAPI } from '../lib/api';
+import { testingAPI, apiConfigsAPI } from '../lib/api';
 import { useToast } from '../contexts/ToastContext';
 import Card from '../components/ui/Card';
 import Button from '../components/ui/Button';
-import { Play, Plus, Trash2, Clock, CheckCircle, AlertCircle, Copy, History } from 'lucide-react';
+import { Play, Plus, Trash2, Clock, CheckCircle, AlertCircle, Copy, History, Settings, X } from 'lucide-react';
 
 const ApiTesting = () => {
   const [requests, setRequests] = useState([{
@@ -18,10 +18,14 @@ const ApiTesting = () => {
   const [history, setHistory] = useState([]);
   const [showHistory, setShowHistory] = useState(false);
   const [historyLoading, setHistoryLoading] = useState(false);
+  const [configs, setConfigs] = useState([]);
+  const [showConfigs, setShowConfigs] = useState(false);
+  const [configsLoading, setConfigsLoading] = useState(false);
   const { success, error } = useToast();
 
   useEffect(() => {
     fetchHistory();
+    fetchConfigs();
   }, []);
 
   const fetchHistory = async () => {
@@ -33,6 +37,18 @@ const ApiTesting = () => {
       console.error('Failed to fetch testing history:', err);
     } finally {
       setHistoryLoading(false);
+    }
+  };
+
+  const fetchConfigs = async () => {
+    try {
+      setConfigsLoading(true);
+      const response = await apiConfigsAPI.getAll();
+      setConfigs(response.data);
+    } catch (err) {
+      console.error('Failed to fetch API configs:', err);
+    } finally {
+      setConfigsLoading(false);
     }
   };
 
@@ -49,11 +65,8 @@ const ApiTesting = () => {
       prev.map(req => {
         if (req.id === id) {
           const newHeaders = { ...req.headers };
-          if (headerValue.trim() === '') {
-            delete newHeaders[headerKey];
-          } else {
-            newHeaders[headerKey] = headerValue;
-          }
+          // Always update the header, even if empty, to allow typing
+          newHeaders[headerKey] = headerValue;
           return { ...req, headers: newHeaders };
         }
         return req;
@@ -65,7 +78,7 @@ const ApiTesting = () => {
     setRequests(prev =>
       prev.map(req =>
         req.id === id
-          ? { ...req, headers: { ...req.headers, '': '' } }
+          ? { ...req, headers: { ...req.headers, [`header_${Date.now()}`]: '' } }
           : req
       )
     );
@@ -105,10 +118,20 @@ const ApiTesting = () => {
     try {
       setLoading(prev => ({ ...prev, [request.id]: true }));
 
+      // Filter out empty headers and temporary keys
+      const cleanHeaders = Object.fromEntries(
+        Object.entries(request.headers)
+          .filter(([key, value]) => 
+            !key.startsWith('header_') && 
+            key.trim() && 
+            value.trim()
+          )
+      );
+
       const requestData = {
         url: request.url,
         method: request.method,
-        headers: request.headers,
+        headers: cleanHeaders,
         timeout: 30000
       };
 
@@ -242,6 +265,18 @@ const ApiTesting = () => {
     success('Request loaded from history');
   };
 
+  const loadFromConfig = (config) => {
+    setRequests([{
+      id: 1,
+      url: `${config.baseUrl}${config.endpoint}`,
+      method: config.method,
+      headers: config.headers || {},
+      body: config.body || ''
+    }]);
+    setShowConfigs(false);
+    success('Configuration loaded successfully');
+  };
+
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleString('en-US', {
       year: 'numeric',
@@ -284,6 +319,15 @@ const ApiTesting = () => {
           <Button
             variant="outline"
             size="sm"
+            onClick={() => setShowConfigs(!showConfigs)}
+            className="flex items-center space-x-2"
+          >
+            <Settings className="w-4 h-4" />
+            <span>Configs</span>
+          </Button>
+          <Button
+            variant="outline"
+            size="sm"
             onClick={() => setShowHistory(!showHistory)}
             className="flex items-center space-x-2"
           >
@@ -300,6 +344,47 @@ const ApiTesting = () => {
           </Button>
         </div>
       </div>
+
+      {/* Configurations Panel */}
+      {showConfigs && (
+        <Card title="API Configurations" subtitle="Saved API configurations">
+          {configsLoading ? (
+            <div className="flex items-center justify-center h-32">
+              <div className="animate-spin rounded-full h-6 w-6 border-b-2 border-blue-500"></div>
+            </div>
+          ) : configs.length === 0 ? (
+            <div className="text-center py-8 text-gray-500 dark:text-gray-400">
+              <p>No API configurations found.</p>
+              <p className="text-sm mt-2">Create configurations in the API Configurations page.</p>
+            </div>
+          ) : (
+            <div className="space-y-3 max-h-64 overflow-y-auto">
+              {configs.map((config) => (
+                <div key={config._id} className="flex items-center justify-between p-3 bg-gray-50 dark:bg-gray-700 rounded-lg">
+                  <div className="flex items-center space-x-3">
+                    <span className={`px-2 py-1 text-xs font-medium rounded ${getMethodColor(config.method)}`}>
+                      {config.method}
+                    </span>
+                    <span className="text-sm font-medium text-gray-900 dark:text-white">
+                      {config.name}
+                    </span>
+                    <span className="text-sm font-mono text-gray-600 dark:text-gray-400">
+                      {config.baseUrl}{config.endpoint}
+                    </span>
+                  </div>
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={() => loadFromConfig(config)}
+                  >
+                    Load
+                  </Button>
+                </div>
+              ))}
+            </div>
+          )}
+        </Card>
+      )}
 
       {/* History Panel */}
       {showHistory && (
@@ -416,10 +501,10 @@ const ApiTesting = () => {
                 </label>
                 <div className="space-y-2">
                   {Object.entries(request.headers).map(([key, value], index) => (
-                    <div key={index} className="flex space-x-2">
+                    <div key={key} className="flex space-x-2">
                       <input
                         type="text"
-                        value={key}
+                        value={key.startsWith('header_') ? '' : key}
                         onChange={(e) => {
                           const newHeaders = { ...request.headers };
                           delete newHeaders[key];
@@ -436,6 +521,18 @@ const ApiTesting = () => {
                         placeholder="Header value"
                         className="flex-1 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 dark:border-gray-600 dark:bg-gray-700 dark:text-white"
                       />
+                      <Button
+                        type="button"
+                        variant="outline"
+                        onClick={() => {
+                          const newHeaders = { ...request.headers };
+                          delete newHeaders[key];
+                          updateRequest(request.id, 'headers', newHeaders);
+                        }}
+                        className="px-3"
+                      >
+                        <X className="w-4 h-4" />
+                      </Button>
                     </div>
                   ))}
                   <Button

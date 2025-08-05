@@ -16,6 +16,7 @@ import Dashboard from './pages/Dashboard';
 import ApiKeyManager from './pages/ApiKeyManager';
 import ApiAnalytics from './pages/ApiAnalytics';
 import ApiTesting from './pages/ApiTesting';
+import ApiConfigManager from './pages/ApiConfigManager';
 import ApiLogs from './pages/ApiLogs';
 import Activity from './pages/Activity';
 import AdminPanel from './pages/AdminPanel';
@@ -90,6 +91,7 @@ function App() {
                   <Route path="/api-keys" element={<ApiKeyManager />} />
                   <Route path="/analytics" element={<ApiAnalytics />} />
                   <Route path="/testing" element={<ApiTesting />} />
+                  <Route path="/configs" element={<ApiConfigManager />} />
                   <Route path="/logs" element={<ApiLogs />} />
                   <Route path="/activity" element={<Activity />} />
                   <Route path="/admin" element={<AdminPanel />} />

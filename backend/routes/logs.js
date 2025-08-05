@@ -44,6 +44,8 @@ router.get('/', async (req, res) => {
     sortOptions[sortBy] = sortOrder === 'desc' ? -1 : 1;
 
     // Get logs and total count
+    console.log('Fetching logs with query:', JSON.stringify(query, null, 2));
+    
     const [logs, total] = await Promise.all([
       ApiLog.find(query)
         .sort(sortOptions)
@@ -52,6 +54,16 @@ router.get('/', async (req, res) => {
         .select('-requestBody -responseBody -requestHeaders -responseHeaders'), // Exclude large fields
       ApiLog.countDocuments(query)
     ]);
+
+    console.log(`Found ${logs.length} logs out of ${total} total for user ${userId}`);
+    console.log('Logs found:', logs.map(log => ({
+      id: log._id,
+      method: log.method,
+      url: log.fullUrl,
+      status: log.responseStatus,
+      success: log.success,
+      timestamp: log.timestamp
+    })));
 
     // Format logs for response
     const formattedLogs = logs.map(log => ({

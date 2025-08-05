@@ -118,7 +118,17 @@ router.post('/request', [
       }
     };
 
-    await ApiLog.create(logData);
+    console.log('Creating API log with data:', {
+      userId: logData.userId,
+      method: logData.method,
+      url: logData.fullUrl,
+      status: logData.responseStatus,
+      success: logData.success,
+      responseTime: logData.responseTime
+    });
+
+    const savedLog = await ApiLog.create(logData);
+    console.log('API log created successfully:', savedLog._id);
 
     // Update user usage
     if (primaryApiKey) {
